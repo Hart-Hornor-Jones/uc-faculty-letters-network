@@ -207,17 +207,11 @@ function renderPeople(){ if(!cy3)initPeople();
   cy3.add(edges.map(e=>({data:{id:"pe_"+e[0]+"_"+e[1],source:e[0],target:e[1],w:e[2]}})));
   layoutPeople(); peopleLegend(nodes,edges.length,capped);
 }
-function layoutPeople(){
-  cy3.layout({name:LNAME,animate:false,idealEdgeLength:60,nodeRepulsion:8000,nodeSeparation:90,packComponents:true,randomize:true}).run();
-  cy3.nodes().forEach(nd=>{nd.data("bx",nd.position("x")); nd.data("by",nd.position("y"));});
-  applySpacing(true); }
-function applySpacing(doFit){
-  if(!cy3||!cy3.nodes().length||cy3.nodes()[0].data("bx")==null) return;
-  const f=ppSpace/5, ns=cy3.nodes(); let mx=0,my=0;
-  ns.forEach(nd=>{mx+=nd.data("bx"); my+=nd.data("by");}); mx/=ns.length; my/=ns.length;
-  cy3.batch(()=>ns.forEach(nd=>nd.position({x:mx+(nd.data("bx")-mx)*f, y:my+(nd.data("by")-my)*f})));
-  if(doFit) cy3.fit(undefined,40);
-}
+function peopleLayoutOpts(randomize){ return {name:LNAME,animate:false,
+  nodeRepulsion:2000+ppSpace*3200, idealEdgeLength:30+ppSpace*22, nodeSeparation:40+ppSpace*18,
+  gravity:0.2, gravityRange:3.8, packComponents:true, randomize:randomize}; }
+function layoutPeople(){ cy3.layout(peopleLayoutOpts(true)).run(); cy3.fit(undefined,40); }
+function relayoutRepulsion(){ if(cy3&&cy3.nodes().length) cy3.layout(peopleLayoutOpts(false)).run(); }
 function edgePanel(a,b){
   const pa=personById[a]||{name:a}, pb=personById[b]||{name:b};
   const sa=new Set(INC.byPerson[a]||[]); const shared=(INC.byPerson[b]||[]).filter(x=>sa.has(x))
@@ -274,7 +268,7 @@ document.getElementById("bp-clear").onclick=()=>{ if(cy2)cy2.elements().remove()
 document.getElementById("bp-cap").oninput=e=>{bpCap=+e.target.value;document.getElementById("bp-capval").textContent=e.target.value;};
 document.getElementById("pp-node").oninput=e=>{ppNode=+e.target.value;document.getElementById("pp-nodeval").textContent=e.target.value;renderPeople();};
 document.getElementById("pp-edge").oninput=e=>{ppEdge=+e.target.value;document.getElementById("pp-edgeval").textContent=e.target.value;renderPeople();};
-document.getElementById("pp-space").oninput=e=>{ppSpace=+e.target.value;document.getElementById("pp-spaceval").textContent=e.target.value;applySpacing(false);};
+var _ppSp=document.getElementById("pp-space");_ppSp.oninput=e=>{ppSpace=+e.target.value;document.getElementById("pp-spaceval").textContent=e.target.value;};_ppSp.onchange=()=>relayoutRepulsion();
 document.getElementById("pp-search").oninput=e=>{ const q=e.target.value.toLowerCase(); if(!cy3)return;
   if(!q){clearFade(cy3);return;} const m=cy3.nodes().filter(n=>personById[n.id()].name.toLowerCase().includes(q));
   cy3.elements().addClass("faded"); m.removeClass("faded"); if(m.length>=1)selectPerson(m[0].id()); };
