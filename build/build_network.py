@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Build affiliation-network data from the standardized corpus."""
-import csv, json, os, itertools, math
+import csv, json, os, itertools, math, re
 from collections import Counter, defaultdict
 
 HERE=os.path.dirname(os.path.abspath(__file__))
@@ -20,13 +20,31 @@ for m in idx:
     letters.append(dict(id=m["statement_id"], title=m["title"], date_iso=m["date_iso"],
         year=yr(m["date_iso"]), type=m["type"], stance=m["stance"], topic=m["topic"],
         campus_scope=m["campus_scope"], n_signatories=int(m["n_signatories"] or 0),
-        text_status=m["statement_text_status"], source_url=m["source_url"]))
+        text_status=m["statement_text_status"], source_url=m["source_url"],
+        addressee=m.get("addressee",""), date_raw=m.get("date_raw",""), signatory_unit=m.get("signatory_unit",""),
+        n_reported=m.get("n_signatories_reported",""), source_kind=m.get("source_kind",""),
+        source_file=m.get("source_file",""), source_group=m.get("source_group",""),
+        extraction=m.get("extraction_method",""), stream=m.get("stream",""), notes=m.get("notes","")))
+def apply_overrides(letters):
+    fp=os.path.join(IDX,"letter_overrides.csv")
+    if not os.path.exists(fp): return 0
+    n=0
+    for row in csv.DictReader(open(fp,encoding="utf-8-sig")):
+        key=(row.get("statement_id") or "").strip(); field=(row.get("field") or "").strip(); val=(row.get("value") or "").strip()
+        if not key or not field: continue
+        ms=[l for l in letters if l["id"]==key] or [l for l in letters if key.lower() in (l["title"] or "").lower()]
+        if len(ms)!=1: print("  [override] skipped ("+str(len(ms))+" matches):",key,field); continue
+        ms[0][field]=val
+        if field=="date_iso": ms[0]["year"]=yr(val)
+        n+=1
+    return n
+print("[build_network] overrides applied:",apply_overrides(letters))
 lid=[l["id"] for l in letters]
 
 # ---- incidence ----
 signers=defaultdict(list)          # sid -> list of (name_norm, display, campus) in order
 letters_of=defaultdict(set)        # name_norm -> set(sid)
-disp=defaultdict(Counter); camp=defaultdict(Counter)
+disp=defaultdict(Counter); camp=defaultdict(Counter); aff=defaultdict(Counter)
 for r in sig:
     nn=(r.get("name_norm") or "").strip()
     sid=r["statement_id"]
@@ -35,6 +53,7 @@ for r in sig:
     letters_of[nn].add(sid)
     if r.get("name"): disp[nn][r["name"].strip()]+=1
     if r.get("campus_code"): camp[nn][r["campus_code"].strip()]+=1
+    if (r.get("affiliation") or "").strip(): aff[nn][r["affiliation"].strip()]+=1
 sset={sid:set(nn for nn,_,_ in lst) for sid,lst in signers.items()}
 
 # ---- letter-letter edges ----
@@ -53,13 +72,19 @@ nlet={nn:len(s) for nn,s in letters_of.items()}
 dist=Counter(v for v in nlet.values())
 def count_ge(k): return sum(1 for v in nlet.values() if v>=k)
 order_by_date={sid:(letters[i]["date_iso"] or "9999") for i,sid in enumerate(lid)}
+ENR=json.load(open(os.path.join(OUT,"person_enrich.json"),encoding="utf-8")) if os.path.exists(os.path.join(OUT,"person_enrich.json")) else {}
+def clean_dept(x):
+    x=re.sub(r'^(Distinguished |Associate |Assistant |Adjunct |Clinical |Visiting |Continuing |Senior |Teaching |Research |Acting |Emerit\w+ )*(Professor|Lecturer|Dean|Chair|Director|Instructor|Scientist|Researcher)( of | in | and Chair of |, )?','',str(x),flags=re.I)
+    return re.sub(r'\s+',' ',x).strip(" ,;")[:60]
 persons=[]
 for nn,k in nlet.items():
     if k<2: continue
     dn=disp[nn].most_common(1)[0][0] if disp[nn] else nn.title()
-    cp=camp[nn].most_common(1)[0][0] if camp[nn] else ""
+    e=ENR.get(nn,{})
+    cp=camp[nn].most_common(1)[0][0] if camp[nn] else e.get("campus","")
+    dep=e.get("dept","") or (clean_dept(aff[nn].most_common(1)[0][0]) if aff[nn] else "")
     ls=sorted(letters_of[nn], key=lambda s:order_by_date.get(s,"9999"))
-    persons.append(dict(id=nn,name=dn,campus_primary=cp,n_letters=k,letters=ls))
+    persons.append(dict(id=nn,name=dn,campus_primary=cp,n_letters=k,letters=ls,dept=dep))
 persons.sort(key=lambda p:-p["n_letters"])
 
 # ---- person edges (index-based; emit pairs sharing >= EDGE_KEEP letters; >=3 => both signed >=3) ----

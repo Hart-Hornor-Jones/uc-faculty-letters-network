@@ -17,6 +17,7 @@
     <button class="tab" data-view="matrix">Matrix</button>
     <button class="tab" data-view="bipartite">Bipartite explorer</button>
     <button class="tab" data-view="people">Signatory network</button>
+    <button class="tab" data-view="catalogue">Catalogue</button>
   </nav>
 </header>
 
@@ -78,10 +79,19 @@
       <div class="stage two">
         <div class="cyhost"><div id="cy-people"></div><div id="legend-people" class="legend"></div></div>
         <div id="connectors" class="panel-table">
-          <table><thead><tr><th>#</th><th>Name</th><th>Campus</th><th>Letters</th><th>Span</th></tr></thead>
+          <table><thead><tr><th>#</th><th>Name</th><th>Campus</th><th>Discipline</th><th>Letters</th><th>Span</th></tr></thead>
           <tbody id="connectors-body"></tbody></table>
         </div>
       </div>
+    </section>
+    <section id="view-catalogue" class="view">
+      <div class="toolbar">
+        <span id="cat-count" class="hint"></span>
+        <label>Sort <select id="cat-sort"><option value="date">date</option><option value="signers">signers</option><option value="type">type</option><option value="title">title</option></select></label>
+        <input type="search" id="cat-search" placeholder="search title / topic / addressee…"/>
+        <span class="hint">Click a row to open that letter in the network.</span>
+      </div>
+      <div class="stage"><div id="catalogue-wrap"></div></div>
     </section>
   </main>
 

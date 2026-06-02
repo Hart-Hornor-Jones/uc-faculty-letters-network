@@ -55,7 +55,7 @@ function letterPanel(id){ const l=letterById[id]; if(!l)return;
   h+=`</ul>`; setPanel(h); }
 function personPanel(id){ const p=personById[id]||{id,name:id,letters:(INC.byPerson[id]||[]),campus_primary:""};
   const ls=(p.letters||INC.byPerson[id]||[]);
-  let h=`<h2>${esc(p.name||id)}</h2><div class="sub">${esc(p.campus_primary||"")} · signed ${ls.length} letters</div><ul>`;
+  let h=`<h2>${esc(p.name||id)}</h2><div class="sub">${esc(p.campus_primary||"")}${p.dept?" · "+esc(p.dept):""} · signed ${ls.length} letters</div><ul>`;
   ls.forEach(sid=>{const l=letterById[sid]; if(l)h+=`<li data-letter="${sid}">${l.date_iso||""} — ${esc(shortTitle(l))}</li>`;});
   h+=`</ul>`; setPanel(h); }
 function esc(s){ return (s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c])); }
@@ -159,7 +159,7 @@ function initBip(){ cy2=cytoscape({container:document.getElementById("cy-bip"),e
   style:baseStyle(),layout:{name:LNAME,animate:false},wheelSensitivity:0.2});
   cy2.on("tap","node.L",e=>{expandLetter(e.target.id());letterPanel(e.target.id());});
   cy2.on("tap","node.Pp",e=>{expandPerson(e.target.id());personPanel(e.target.id());});
-  cy2.on("mouseover","node.Pp",e=>showTip(`<b>${esc(e.target.data("label"))}</b><br>signed ${(INC.byPerson[e.target.id()]||[]).length} letters`,e.originalEvent));
+  cy2.on("mouseover","node.Pp",e=>{const pp=personById[e.target.id()];showTip(`<b>${esc(e.target.data("label"))}</b>${pp&&pp.dept?"<br>"+esc(pp.dept):""}<br>signed ${(INC.byPerson[e.target.id()]||[]).length} letters`,e.originalEvent);});
   cy2.on("mouseover","node.L",e=>showTip(`<b>${esc(letterById[e.target.id()]?letterById[e.target.id()].title:e.target.id())}</b>`,e.originalEvent));
   cy2.on("mouseout",hideTip);
 }
@@ -188,7 +188,7 @@ function initPeople(){ cy3=cytoscape({container:document.getElementById("cy-peop
   cy3.on("tap","node",e=>selectPerson(e.target.id()));
   cy3.on("tap",e=>{if(e.target===cy3)clearFade(cy3);});
   cy3.on("mouseover","node",e=>{const p=personById[e.target.id()];
-    showTip(`<b>${esc(p.name)}</b><br>${esc(p.campus_primary||"")} · ${p.n_letters} letters`,e.originalEvent);});
+    showTip(`<b>${esc(p.name)}</b><br>${esc(p.campus_primary||"")}${p.dept?" · "+esc(p.dept):""} · ${p.n_letters} letters`,e.originalEvent);});
   cy3.on("mouseout",hideTip);
   renderConnectors();
 }
@@ -217,18 +217,19 @@ function renderConnectors(){ const tb=document.getElementById("connectors-body")
   const rows=P.slice(0,80); tb.innerHTML=rows.map((p,i)=>{
     const ls=p.letters.map(s=>letterById[s]).filter(Boolean).map(l=>l.year).filter(Boolean);
     const span=ls.length?Math.min(...ls)+"–"+Math.max(...ls):"";
-    return `<tr data-person="${p.id}"><td>${i+1}</td><td>${esc(p.name)}</td><td>${esc(p.campus_primary)}</td><td>${p.n_letters}</td><td>${span}</td></tr>`;}).join("");
+    return `<tr data-person="${p.id}"><td>${i+1}</td><td>${esc(p.name)}</td><td>${esc(p.campus_primary)}</td><td>${esc(p.dept||"")}</td><td>${p.n_letters}</td><td>${span}</td></tr>`;}).join("");
   tb.querySelectorAll("tr").forEach(tr=>tr.onclick=()=>{ selectPerson(tr.dataset.person); });
 }
 
 /* ===================== tabs / init ===================== */
-const views={letters:initLetters,matrix:()=>drawMatrix(),bipartite:initBip,people:renderPeople};
+const views={letters:initLetters,matrix:()=>drawMatrix(),bipartite:initBip,people:renderPeople,catalogue:renderCatalogue};
 const inited={};
 function switchView(v){ state.view=v;
   document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.view===v));
   document.querySelectorAll(".view").forEach(s=>s.classList.toggle("active",s.id==="view-"+v));
   if(!inited[v]){ inited[v]=true; if(views[v])views[v](); }
   else if(v==="matrix")drawMatrix();
+  else if(v==="catalogue")renderCatalogue();
   setTimeout(()=>{ if(v==="letters"&&cy1){cy1.resize();cy1.fit(undefined,30);}
     if(v==="bipartite"&&cy2){cy2.resize();cy2.fit(undefined,30);}
     if(v==="people"&&cy3){cy3.resize();cy3.fit(undefined,30);} },30);
@@ -262,4 +263,34 @@ document.getElementById("meta-line").textContent=`${META.n_letters} letters · $
 
 /* boot */
 switchView("letters");
+
+/* ===================== CATALOGUE ===================== */
+let catSort="date", catSearch="";
+function renderCatalogue(){
+  const wrap=document.getElementById("catalogue-wrap"); if(!wrap)return;
+  const q=catSearch.toLowerCase();
+  let rows=L.slice();
+  if(q) rows=rows.filter(l=>((l.title||"")+" "+(l.topic||"")+" "+(l.addressee||"")+" "+(l.type||"")).toLowerCase().includes(q));
+  const cmp={date:(a,b)=>String(b.date_iso||"0").localeCompare(String(a.date_iso||"0")),
+    signers:(a,b)=>b.n_signatories-a.n_signatories,
+    type:(a,b)=>String(a.type).localeCompare(String(b.type)),
+    title:(a,b)=>String(a.title).localeCompare(String(b.title))};
+  rows.sort(cmp[catSort]||cmp.date);
+  const cc=document.getElementById("cat-count"); if(cc) cc.textContent=rows.length+" of "+L.length+" letters";
+  let h='<table class="cat-table"><thead><tr><th>Date</th><th>Letter</th><th>Type / stance</th><th>Topic</th><th>Scope</th><th>Signers</th><th>Text</th><th>Source</th></tr></thead><tbody>';
+  rows.forEach(l=>{
+    const src=l.source_url?`<a href="${esc(l.source_url)}" target="_blank" rel="noopener">link</a>`:esc((l.source_file||"").slice(0,16));
+    h+=`<tr data-letter="${l.id}"><td>${l.date_iso||"—"}</td>`
+      +`<td><b>${esc(l.title)}</b>${l.addressee?`<div class="muted" style="font-size:11px">to: ${esc(l.addressee)}</div>`:""}</td>`
+      +`<td>${esc(l.type)}<div class="muted" style="font-size:11px">${esc(l.stance)}</div></td>`
+      +`<td>${esc(l.topic)}</td><td>${esc(l.campus_scope)}</td>`
+      +`<td style="text-align:right">${(l.n_signatories||0).toLocaleString()}</td>`
+      +`<td>${String(l.text_status||"").indexOf("full")===0?"full":"meta"}</td><td>${src}</td></tr>`;
+  });
+  wrap.innerHTML=h+"</tbody></table>";
+  wrap.querySelectorAll("tr[data-letter]").forEach(tr=>tr.onclick=ev=>{ if(ev.target.tagName==="A")return; switchView("letters"); selectLetter(tr.dataset.letter); });
+}
+document.getElementById("cat-sort").onchange=e=>{catSort=e.target.value;renderCatalogue();};
+document.getElementById("cat-search").oninput=e=>{catSearch=e.target.value;renderCatalogue();};
+
 })();
