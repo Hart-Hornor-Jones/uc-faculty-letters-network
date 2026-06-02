@@ -186,6 +186,8 @@ function initPeople(){ cy3=cytoscape({container:document.getElementById("cy-peop
   style:baseStyle().concat([{selector:"node",style:{"width":n=>10+Math.sqrt(n.data("k"))*4,"height":n=>10+Math.sqrt(n.data("k"))*4}},{selector:"edge",style:{"width":e=>0.4+(e.data("w")||1)*0.7}}]),
   layout:{name:LNAME,animate:false},wheelSensitivity:0.2});
   cy3.on("tap","node",e=>selectPerson(e.target.id()));
+  cy3.on("tap","edge",e=>{const d=e.target.data(); edgePanel(d.source,d.target);});
+  cy3.on("mouseover","edge",e=>showTip("co-signed "+e.target.data("w")+" letters · click the line for the list",e.originalEvent));
   cy3.on("tap",e=>{if(e.target===cy3)clearFade(cy3);});
   cy3.on("mouseover","node",e=>{const p=personById[e.target.id()];
     showTip(`<b>${esc(p.name)}</b><br>${esc(p.campus_primary||"")}${p.dept?" · "+esc(p.dept):""} · ${p.n_letters} letters`,e.originalEvent);});
@@ -205,8 +207,26 @@ function renderPeople(){ if(!cy3)initPeople();
   cy3.add(edges.map(e=>({data:{id:"pe_"+e[0]+"_"+e[1],source:e[0],target:e[1],w:e[2]}})));
   layoutPeople(); peopleLegend(nodes,edges.length,capped);
 }
-function layoutPeople(){ const rep=2000+ppSpace*4500, iel=28+ppSpace*22;
-  cy3.layout({name:LNAME,animate:false,idealEdgeLength:iel,nodeRepulsion:rep,nodeSeparation:ppSpace*18,packComponents:true,randomize:true}).run(); cy3.fit(undefined,40); }
+function layoutPeople(){
+  cy3.layout({name:LNAME,animate:false,idealEdgeLength:60,nodeRepulsion:8000,nodeSeparation:90,packComponents:true,randomize:true}).run();
+  cy3.nodes().forEach(nd=>{nd.data("bx",nd.position("x")); nd.data("by",nd.position("y"));});
+  applySpacing(true); }
+function applySpacing(doFit){
+  if(!cy3||!cy3.nodes().length||cy3.nodes()[0].data("bx")==null) return;
+  const f=ppSpace/5, ns=cy3.nodes(); let mx=0,my=0;
+  ns.forEach(nd=>{mx+=nd.data("bx"); my+=nd.data("by");}); mx/=ns.length; my/=ns.length;
+  cy3.batch(()=>ns.forEach(nd=>nd.position({x:mx+(nd.data("bx")-mx)*f, y:my+(nd.data("by")-my)*f})));
+  if(doFit) cy3.fit(undefined,40);
+}
+function edgePanel(a,b){
+  const pa=personById[a]||{name:a}, pb=personById[b]||{name:b};
+  const sa=new Set(INC.byPerson[a]||[]); const shared=(INC.byPerson[b]||[]).filter(x=>sa.has(x))
+    .sort((x,y)=>String((letterById[x]||{}).date_iso||"").localeCompare(String((letterById[y]||{}).date_iso||"")));
+  let h=`<h2>Shared letters</h2><div class="sub">${esc(pa.name)} &harr; ${esc(pb.name)}</div>`;
+  h+=`<div class="kv"><b>co-signed</b> ${shared.length} letters</div><ul>`;
+  shared.forEach(sid=>{const l=letterById[sid]; if(l) h+=`<li data-letter="${sid}">${l.date_iso||"—"} — ${esc(shortTitle(l))}</li>`;});
+  setPanel(h+"</ul>");
+}
 function peopleLegend(nodes,nedges,capped){ const order=["UCB","UCD","UCI","UCLA","UCM","UCR","UCSD","UCSF","UCSB","UCSC",""];
   const present=[...new Set(nodes.map(p=>p.campus_primary))].filter(c=>c in CAMPUS_COLORS).sort((a,b)=>order.indexOf(a)-order.indexOf(b));
   const el=document.getElementById("legend-people"); if(!el)return;
@@ -214,7 +234,7 @@ function peopleLegend(nodes,nedges,capped){ const order=["UCB","UCD","UCI","UCLA
     present.map(c=>`<div class="row"><span class="sw" style="background:${CAMPUS_COLORS[c]}"></span>${c||"unknown"}</div>`).join("")+
     `<div class="row" style="margin-top:5px">${nodes.length} people · ${nedges} ties${capped?" (strongest shown)":""}</div>`; }
 function renderConnectors(){ const tb=document.getElementById("connectors-body");
-  const rows=P.slice(0,80); tb.innerHTML=rows.map((p,i)=>{
+  const rows=P; tb.innerHTML=rows.map((p,i)=>{
     const ls=p.letters.map(s=>letterById[s]).filter(Boolean).map(l=>l.year).filter(Boolean);
     const span=ls.length?Math.min(...ls)+"–"+Math.max(...ls):"";
     return `<tr data-person="${p.id}"><td>${i+1}</td><td>${esc(p.name)}</td><td>${esc(p.campus_primary)}</td><td>${esc(p.dept||"")}</td><td>${p.n_letters}</td><td>${span}</td></tr>`;}).join("");
@@ -254,7 +274,7 @@ document.getElementById("bp-clear").onclick=()=>{ if(cy2)cy2.elements().remove()
 document.getElementById("bp-cap").oninput=e=>{bpCap=+e.target.value;document.getElementById("bp-capval").textContent=e.target.value;};
 document.getElementById("pp-node").oninput=e=>{ppNode=+e.target.value;document.getElementById("pp-nodeval").textContent=e.target.value;renderPeople();};
 document.getElementById("pp-edge").oninput=e=>{ppEdge=+e.target.value;document.getElementById("pp-edgeval").textContent=e.target.value;renderPeople();};
-document.getElementById("pp-space").oninput=e=>{ppSpace=+e.target.value;document.getElementById("pp-spaceval").textContent=e.target.value;if(cy3&&cy3.nodes().length)layoutPeople();};
+document.getElementById("pp-space").oninput=e=>{ppSpace=+e.target.value;document.getElementById("pp-spaceval").textContent=e.target.value;applySpacing(false);};
 document.getElementById("pp-search").oninput=e=>{ const q=e.target.value.toLowerCase(); if(!cy3)return;
   if(!q){clearFade(cy3);return;} const m=cy3.nodes().filter(n=>personById[n.id()].name.toLowerCase().includes(q));
   cy3.elements().addClass("faded"); m.removeClass("faded"); if(m.length>=1)selectPerson(m[0].id()); };
