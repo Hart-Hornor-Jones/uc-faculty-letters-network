@@ -13,17 +13,17 @@
     <p id="subtitle">Documents tied by shared signatories · signatories tied by shared documents</p>
   </div>
   <nav class="tabs">
-    <button class="tab active" data-view="letters">Letter network</button>
+    <button class="tab active" data-view="people">Signatory network</button>
+    <button class="tab" data-view="letters">Letter network</button>
     <button class="tab" data-view="matrix">Matrix</button>
     <button class="tab" data-view="bipartite">Bipartite explorer</button>
-    <button class="tab" data-view="people">Signatory network</button>
     <button class="tab" data-view="catalogue">Catalogue</button>
   </nav>
 </header>
 
 <div class="layout">
   <main>
-    <section id="view-letters" class="view active">
+    <section id="view-letters" class="view">
       <div class="toolbar">
         <label>Edge weight
           <select id="lt-metric"><option value="shared">shared signers</option>
@@ -65,7 +65,7 @@
       <div class="stage"><div id="cy-bip"></div></div>
     </section>
 
-    <section id="view-people" class="view">
+    <section id="view-people" class="view active">
       <div class="toolbar">
         <label>Min letters/person <span id="pp-nodeval">4</span>
           <input type="range" id="pp-node" min="3" max="9" value="4"/></label>

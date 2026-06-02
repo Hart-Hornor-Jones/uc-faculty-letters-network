@@ -262,7 +262,7 @@ document.getElementById("data-note-toggle").onclick=e=>{e.preventDefault();const
 document.getElementById("meta-line").textContent=`${META.n_letters} letters · ${totalSigs.toLocaleString()} signature records · ${META.n_persons_total.toLocaleString()} unique signers · ${META.n_bridgers_ge2.toLocaleString()} signed ≥2`;
 
 /* boot */
-switchView("letters");
+switchView("people");
 
 /* ===================== CATALOGUE ===================== */
 let catSort="date", catSearch="";
