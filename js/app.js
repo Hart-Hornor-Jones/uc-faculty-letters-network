@@ -71,13 +71,13 @@ function clearFade(cy){ cy.elements().removeClass("faded sel"); }
 
 /* ---------- shared cy style ---------- */
 function baseStyle(){ return [
-  {selector:"node",style:{"label":"data(label)","color":"#111","text-outline-color":"#fff","text-outline-width":1.4,"font-size":"7px","text-wrap":"wrap","text-max-width":"70px",
+  {selector:"node",style:{"label":"data(label)","color":"#111","text-outline-color":"#fff","text-outline-width":1.4,"font-size":"9px","text-wrap":"wrap","text-max-width":"70px",
      "text-valign":"center","text-halign":"center","background-color":"data(color)","border-width":0.5,"border-color":"rgba(0,0,0,0.35)"}},
   {selector:"edge",style:{"line-color":"#000","curve-style":"haystack","opacity":0.28}},
   {selector:".faded",style:{"opacity":0.06,"text-opacity":0.04}},
   {selector:".sel",style:{"border-width":3,"border-color":"#1a73e8"}},
-  {selector:"node.L",style:{"shape":"round-rectangle","color":"#111","font-size":"8px","border-width":1,"border-color":"#222"}},
-  {selector:"node.Pp",style:{"shape":"ellipse","width":11,"height":11,"font-size":"6px"}},{selector:"node.Pp.multi",style:{"border-width":2,"border-color":"#111"}}
+  {selector:"node.L",style:{"shape":"round-rectangle","color":"#111","font-size":"10px","border-width":1,"border-color":"#222"}},
+  {selector:"node.Pp",style:{"shape":"ellipse","width":11,"height":11,"font-size":"8px"}},{selector:"node.Pp.multi",style:{"border-width":2,"border-color":"#111"}}
 ];}
 
 /* ===================== LETTERS ===================== */
