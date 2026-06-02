@@ -1,1 +1,1 @@
-{"n_letters": 27, "n_letter_edges": 194, "n_persons_total": 7044, "n_bridgers_ge2": 1968, "network_min": 5, "edge_keep": 4, "node_min_default": 6, "edge_min_default": 5, "n_person_nodes": 187, "n_person_edges": 5664, "generated_from": "_standardized_corpus/00_INDEX"}
+{"n_letters": 29, "n_letter_edges": 243, "n_persons_total": 8504, "n_bridgers_ge2": 2216, "network_min": 3, "edge_keep": 3, "node_min_default": 4, "edge_min_default": 5, "n_person_nodes": 971, "n_person_edges": 67117, "generated_from": "_standardized_corpus/00_INDEX"}

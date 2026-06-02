@@ -62,16 +62,17 @@ for nn,k in nlet.items():
     persons.append(dict(id=nn,name=dn,campus_primary=cp,n_letters=k,letters=ls))
 persons.sort(key=lambda p:-p["n_letters"])
 
-# ---- choose NETWORK_MIN (smallest k>=3 giving <=350 nodes) ----
-NETWORK_MIN=next((k for k in (3,4,5,6) if count_ge(k)<=350), 6)
-node_ids=set(nn for nn,k in nlet.items() if k>=NETWORK_MIN)
+# ---- person edges (index-based; emit pairs sharing >= EDGE_KEEP letters; >=3 => both signed >=3) ----
+EDGE_KEEP=3
+edge_nodes=set(nn for nn,k in nlet.items() if k>=EDGE_KEEP)
 pair=Counter()
 for sid,st in sset.items():
-    sub=[nn for nn in st if nn in node_ids]
+    sub=[nn for nn in st if nn in edge_nodes]
     for a,b in itertools.combinations(sorted(sub),2):
         pair[(a,b)]+=1
-EDGE_KEEP=4
-pedges=[dict(source=a,target=b,shared_letters=w) for (a,b),w in pair.items() if w>=EDGE_KEEP]
+pidx={pp["id"]:i for i,pp in enumerate(persons)}
+pedges=[[pidx[a],pidx[b],w] for (a,b),w in pair.items() if w>=EDGE_KEEP and a in pidx and b in pidx]
+NETWORK_MIN=EDGE_KEEP; node_ids=edge_nodes
 
 # ---- incidence lookups ----
 incidence=dict(
@@ -96,7 +97,7 @@ orders=dict(date=order_date,topic=order_topic,alpha=order_alpha,cluster=order_cl
 
 meta=dict(n_letters=len(letters), n_letter_edges=len(ledges),
   n_persons_total=len(nlet), n_bridgers_ge2=count_ge(2),
-  network_min=NETWORK_MIN, edge_keep=EDGE_KEEP, node_min_default=6, edge_min_default=5,
+  network_min=NETWORK_MIN, edge_keep=EDGE_KEEP, node_min_default=4, edge_min_default=5,
   n_person_nodes=len(node_ids), n_person_edges=len(pedges),
   generated_from="_standardized_corpus/00_INDEX")
 

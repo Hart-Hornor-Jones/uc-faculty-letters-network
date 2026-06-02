@@ -71,13 +71,13 @@ function clearFade(cy){ cy.elements().removeClass("faded sel"); }
 
 /* ---------- shared cy style ---------- */
 function baseStyle(){ return [
-  {selector:"node",style:{"label":"data(label)","color":"#cdd3df","font-size":"7px","text-wrap":"wrap","text-max-width":"70px",
-     "text-valign":"center","text-halign":"center","background-color":"data(color)","border-width":1,"border-color":"#10131a"}},
-  {selector:"edge",style:{"line-color":"#3a4150","curve-style":"haystack","opacity":0.55}},
-  {selector:".faded",style:{"opacity":0.08,"text-opacity":0.05}},
-  {selector:".sel",style:{"border-width":3,"border-color":"#ffd166"}},
-  {selector:"node.L",style:{"shape":"round-rectangle","background-color":"#4e79a7","color":"#eef","font-size":"8px"}},
-  {selector:"node.Pp",style:{"shape":"ellipse","background-color":"#9c6","width":10,"height":10,"font-size":"6px"}}
+  {selector:"node",style:{"label":"data(label)","color":"#111","text-outline-color":"#fff","text-outline-width":1.4,"font-size":"7px","text-wrap":"wrap","text-max-width":"70px",
+     "text-valign":"center","text-halign":"center","background-color":"data(color)","border-width":0.5,"border-color":"rgba(0,0,0,0.35)"}},
+  {selector:"edge",style:{"line-color":"#000","curve-style":"haystack","opacity":0.28}},
+  {selector:".faded",style:{"opacity":0.06,"text-opacity":0.04}},
+  {selector:".sel",style:{"border-width":3,"border-color":"#1a73e8"}},
+  {selector:"node.L",style:{"shape":"round-rectangle","color":"#111","font-size":"8px","border-width":1,"border-color":"#222"}},
+  {selector:"node.Pp",style:{"shape":"ellipse","width":11,"height":11,"font-size":"6px"}},{selector:"node.Pp.multi",style:{"border-width":2,"border-color":"#111"}}
 ];}
 
 /* ===================== LETTERS ===================== */
@@ -132,16 +132,16 @@ function drawMatrix(){
   svg.setAttribute("width",W); svg.setAttribute("height",H); svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
   const NS="http://www.w3.org/2000/svg"; let out="";
   ids.forEach((id,i)=>{ const l=letterById[id], yy=padT+i*cell+cell-6;
-    out+=`<text x="${padL-6}" y="${yy}" text-anchor="end" font-size="10" fill="#cdd3df" data-row="${id}" style="cursor:pointer">${esc(trunc(shortTitle(l),30))}</text>`;
-    out+=`<text transform="translate(${padL+i*cell+14},${padT-6}) rotate(-55)" font-size="10" fill="#cdd3df" data-col="${id}" style="cursor:pointer">${esc(trunc(shortTitle(l),30))}</text>`; });
+    out+=`<text x="${padL-6}" y="${yy}" text-anchor="end" font-size="10" fill="#111" data-row="${id}" style="cursor:pointer">${esc(trunc(shortTitle(l),30))}</text>`;
+    out+=`<text transform="translate(${padL+i*cell+14},${padT-6}) rotate(-55)" font-size="10" fill="#111" data-col="${id}" style="cursor:pointer">${esc(trunc(shortTitle(l),30))}</text>`; });
   for(let i=0;i<n;i++)for(let j=0;j<n;j++){ const a=ids[i],b=ids[j]; let fill,val;
     if(i===j){ fill=letterColor(letterById[a],"theme"); val="self ("+letterById[a].n_signatories+")"; }
     else { const sv=(sharedLU[a]&&sharedLU[a][b])||0; const jv=(jacLU[a]&&jacLU[a][b])||0;
       val=mxMetric==="shared"?sv:jv; const t=mxMetric==="shared"?(sv/maxShared):jv;
-      fill=sv===0?"#141821":`rgba(106,166,255,${0.12+0.88*Math.sqrt(t)})`; }
+      fill=sv===0?"#eef1f5":`rgba(106,166,255,${0.12+0.88*Math.sqrt(t)})`; }
     const sel=state.sel&&state.sel.t==="L"&&(state.sel.id===a||state.sel.id===b);
     out+=`<rect x="${padL+j*cell}" y="${padT+i*cell}" width="${cell-1}" height="${cell-1}" fill="${fill}" `+
-      `stroke="${sel?"#ffd166":"none"}" data-a="${a}" data-b="${b}" style="cursor:pointer"></rect>`; }
+      `stroke="${sel?"#1a73e8":"none"}" data-a="${a}" data-b="${b}" style="cursor:pointer"></rect>`; }
   svg.innerHTML=out;
   svg.querySelectorAll("rect").forEach(r=>{ const a=r.dataset.a,b=r.dataset.b;
     r.addEventListener("mousemove",ev=>{ if(a===b){showTip(`<b>${esc(shortTitle(letterById[a]))}</b><br>${letterById[a].n_signatories} signatories`,ev);return;}
@@ -164,24 +164,24 @@ function initBip(){ cy2=cytoscape({container:document.getElementById("cy-bip"),e
   cy2.on("mouseout",hideTip);
 }
 function bipAddLetter(id){ if(cy2.$id(id).length)return; const l=letterById[id];
-  cy2.add({group:"nodes",classes:"L",data:{id,label:shortTitle(l)||id}}); }
-function bipAddPerson(pid,name){ if(cy2.$id(pid).length)return;
-  cy2.add({group:"nodes",classes:"Pp",data:{id:pid,label:name||(personById[pid]&&personById[pid].name)||pid}}); }
+  cy2.add({group:"nodes",classes:"L",data:{id,label:shortTitle(l)||id,color:THEME_COLORS[theme(l.topic)]}}); }
+function bipAddPerson(pid,name,campus){ if(cy2.$id(pid).length)return; const multi=(INC.byPerson[pid]||[]).length>=2;
+  cy2.add({group:"nodes",classes:"Pp"+(multi?" multi":""),data:{id:pid,label:name||(personById[pid]&&personById[pid].name)||pid,color:CAMPUS_COLORS[campus]||"#718096"}}); }
 function bipLink(l,p){ const id="b_"+l+"__"+p; if(cy2.$id(id).length)return; cy2.add({group:"edges",data:{id,source:l,target:p}}); }
 function focusLetter(id){ if(!cy2)initBip(); cy2.elements().remove(); bipAddLetter(id);
-  const sg=(INC.byLetter[id]||[]); sg.slice(0,bpCap).forEach(s=>{bipAddPerson(s.id,s.name);bipLink(id,s.id);});
+  const sg=(INC.byLetter[id]||[]); sg.slice(0,bpCap).forEach(s=>{bipAddPerson(s.id,s.name,s.campus);bipLink(id,s.id);});
   bipRun(); document.getElementById("bp-letter").value=id;
   setPanel(`<h2>${esc(letterById[id].title)}</h2><div class="sub">showing ${Math.min(bpCap,sg.length)} of ${sg.length} signers</div><p class="muted">Click a person to add the other letters they signed.</p>`); }
-function expandLetter(id){ const sg=(INC.byLetter[id]||[]); sg.slice(0,bpCap).forEach(s=>{bipAddPerson(s.id,s.name);bipLink(id,s.id);}); bipRun(); }
+function expandLetter(id){ const sg=(INC.byLetter[id]||[]); sg.slice(0,bpCap).forEach(s=>{bipAddPerson(s.id,s.name,s.campus);bipLink(id,s.id);}); bipRun(); }
 function expandPerson(pid){ const ls=(INC.byPerson[pid]||[]); ls.forEach(sid=>{ if(letterById[sid]){bipAddLetter(sid);bipLink(sid,pid);} }); bipRun(); }
 function focusIntersection(a,b){ if(!cy2)initBip(); cy2.elements().remove(); bipAddLetter(a); bipAddLetter(b);
   const sb=new Set((INC.byLetter[b]||[]).map(s=>s.id)); const both=(INC.byLetter[a]||[]).filter(s=>sb.has(s.id));
-  both.slice(0,bpCap*2).forEach(s=>{bipAddPerson(s.id,s.name);bipLink(a,s.id);bipLink(b,s.id);}); bipRun();
+  both.slice(0,bpCap*2).forEach(s=>{bipAddPerson(s.id,s.name,s.campus);bipLink(a,s.id);bipLink(b,s.id);}); bipRun();
   setPanel(`<h2>Shared signers</h2><div class="sub">${esc(shortTitle(letterById[a]))} &cap; ${esc(shortTitle(letterById[b]))}</div><div class="kv"><b>${both.length}</b> people signed both${both.length>bpCap*2?` (showing ${bpCap*2})`:""}.</div>`); }
 function bipRun(){ cy2.layout({name:LNAME,animate:false,idealEdgeLength:60,nodeRepulsion:6000}).run(); cy2.fit(undefined,30); }
 
 /* ===================== PEOPLE ===================== */
-let cy3=null, ppNode=6, ppEdge=5;
+let cy3=null, ppNode=4, ppEdge=5, ppSpace=5;
 function initPeople(){ cy3=cytoscape({container:document.getElementById("cy-people"),elements:[],
   style:baseStyle().concat([{selector:"node",style:{"width":n=>10+Math.sqrt(n.data("k"))*4,"height":n=>10+Math.sqrt(n.data("k"))*4}},{selector:"edge",style:{"width":e=>0.4+(e.data("w")||1)*0.7}}]),
   layout:{name:LNAME,animate:false},wheelSensitivity:0.2});
@@ -194,13 +194,25 @@ function initPeople(){ cy3=cytoscape({container:document.getElementById("cy-peop
 }
 function renderPeople(){ if(!cy3)initPeople();
   const nodes=P.filter(p=>p.n_letters>=ppNode);
-  const nodeIds=new Set(nodes.map(p=>p.id));
-  const edges=PE.filter(e=>e.shared_letters>=ppEdge&&nodeIds.has(e.source)&&nodeIds.has(e.target));
+  const idset=new Set(nodes.map(p=>p.id));
+  let edges=[];
+  for(const e of PE){ const a=P[e[0]],b=P[e[1]],w=e[2];
+    if(w>=ppEdge&&a&&b&&idset.has(a.id)&&idset.has(b.id)) edges.push([a.id,b.id,w]); }
+  let capped=false; const CAP=7000;
+  if(edges.length>CAP){ edges.sort((x,y)=>y[2]-x[2]); edges=edges.slice(0,CAP); capped=true; }
   cy3.elements().remove();
   cy3.add(nodes.map(p=>({data:{id:p.id,label:p.name,color:CAMPUS_COLORS[p.campus_primary]||"#718096",k:p.n_letters}})));
-  cy3.add(edges.map(e=>({data:{id:"pe_"+e.source+"_"+e.target,source:e.source,target:e.target,w:e.shared_letters}})));
-  cy3.layout({name:LNAME,animate:false,idealEdgeLength:55,nodeRepulsion:7000}).run(); cy3.fit(undefined,30);
+  cy3.add(edges.map(e=>({data:{id:"pe_"+e[0]+"_"+e[1],source:e[0],target:e[1],w:e[2]}})));
+  layoutPeople(); peopleLegend(nodes,edges.length,capped);
 }
+function layoutPeople(){ const rep=2000+ppSpace*4500, iel=28+ppSpace*22;
+  cy3.layout({name:LNAME,animate:false,idealEdgeLength:iel,nodeRepulsion:rep,nodeSeparation:ppSpace*18,packComponents:true,randomize:true}).run(); cy3.fit(undefined,40); }
+function peopleLegend(nodes,nedges,capped){ const order=["UCB","UCD","UCI","UCLA","UCM","UCR","UCSD","UCSF","UCSB","UCSC",""];
+  const present=[...new Set(nodes.map(p=>p.campus_primary))].filter(c=>c in CAMPUS_COLORS).sort((a,b)=>order.indexOf(a)-order.indexOf(b));
+  const el=document.getElementById("legend-people"); if(!el)return;
+  el.innerHTML="<div style='font-weight:600;margin-bottom:4px'>colour = campus · size = #letters</div>"+
+    present.map(c=>`<div class="row"><span class="sw" style="background:${CAMPUS_COLORS[c]}"></span>${c||"unknown"}</div>`).join("")+
+    `<div class="row" style="margin-top:5px">${nodes.length} people · ${nedges} ties${capped?" (strongest shown)":""}</div>`; }
 function renderConnectors(){ const tb=document.getElementById("connectors-body");
   const rows=P.slice(0,80); tb.innerHTML=rows.map((p,i)=>{
     const ls=p.letters.map(s=>letterById[s]).filter(Boolean).map(l=>l.year).filter(Boolean);
@@ -241,6 +253,7 @@ document.getElementById("bp-clear").onclick=()=>{ if(cy2)cy2.elements().remove()
 document.getElementById("bp-cap").oninput=e=>{bpCap=+e.target.value;document.getElementById("bp-capval").textContent=e.target.value;};
 document.getElementById("pp-node").oninput=e=>{ppNode=+e.target.value;document.getElementById("pp-nodeval").textContent=e.target.value;renderPeople();};
 document.getElementById("pp-edge").oninput=e=>{ppEdge=+e.target.value;document.getElementById("pp-edgeval").textContent=e.target.value;renderPeople();};
+document.getElementById("pp-space").oninput=e=>{ppSpace=+e.target.value;document.getElementById("pp-spaceval").textContent=e.target.value;if(cy3&&cy3.nodes().length)layoutPeople();};
 document.getElementById("pp-search").oninput=e=>{ const q=e.target.value.toLowerCase(); if(!cy3)return;
   if(!q){clearFade(cy3);return;} const m=cy3.nodes().filter(n=>personById[n.id()].name.toLowerCase().includes(q));
   cy3.elements().addClass("faded"); m.removeClass("faded"); if(m.length>=1)selectPerson(m[0].id()); };
