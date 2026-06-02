@@ -22,7 +22,6 @@
 
 <div class="layout">
   <main>
-    <!-- LETTERS -->
     <section id="view-letters" class="view active">
       <div class="toolbar">
         <label>Edge weight
@@ -41,7 +40,6 @@
       <div class="stage"><div id="cy-letters"></div><div id="legend-letters" class="legend"></div></div>
     </section>
 
-    <!-- MATRIX -->
     <section id="view-matrix" class="view">
       <div class="toolbar">
         <label>Order
@@ -54,7 +52,6 @@
       <div class="stage"><div id="matrix-wrap"><svg id="matrix"></svg></div></div>
     </section>
 
-    <!-- BIPARTITE -->
     <section id="view-bipartite" class="view">
       <div class="toolbar">
         <label>Focus letter
@@ -62,25 +59,26 @@
         <label>Max signers shown <span id="bp-capval">60</span>
           <input type="range" id="bp-cap" min="20" max="200" step="10" value="60"/></label>
         <button id="bp-clear" class="btn">Clear</button>
-        <span class="hint">Click a person to add their other letters; click a letter to add its signers.</span>
+        <span class="hint">Shapes: ▭ letter (colour = theme), ● person (colour = campus). Bordered people signed ≥2 letters — click to expand.</span>
       </div>
       <div class="stage"><div id="cy-bip"></div></div>
     </section>
 
-    <!-- PEOPLE -->
     <section id="view-people" class="view">
       <div class="toolbar">
-        <label>Min letters / person <span id="pp-nodeval">6</span>
-          <input type="range" id="pp-node" min="5" max="9" value="6"/></label>
+        <label>Min letters/person <span id="pp-nodeval">4</span>
+          <input type="range" id="pp-node" min="3" max="9" value="4"/></label>
         <label>Min co-signed (edge) <span id="pp-edgeval">5</span>
-          <input type="range" id="pp-edge" min="4" max="9" value="5"/></label>
+          <input type="range" id="pp-edge" min="3" max="9" value="5"/></label>
+        <label>Spacing <span id="pp-spaceval">5</span>
+          <input type="range" id="pp-space" min="1" max="10" value="5"/></label>
         <input type="search" id="pp-search" placeholder="search people…"/>
-        <span class="hint">Network = repeat signers; table lists all who signed ≥2.</span>
+        <span class="hint">Scroll to zoom, drag to pan. Table lists everyone who signed ≥2.</span>
       </div>
       <div class="stage two">
-        <div id="cy-people"></div>
+        <div class="cyhost"><div id="cy-people"></div><div id="legend-people" class="legend"></div></div>
         <div id="connectors" class="panel-table">
-          <table><thead><tr><th>#</th><th>Name</th><th>Campus</th><th data-sort="n">Letters</th><th>Span</th></tr></thead>
+          <table><thead><tr><th>#</th><th>Name</th><th>Campus</th><th>Letters</th><th>Span</th></tr></thead>
           <tbody id="connectors-body"></tbody></table>
         </div>
       </div>
@@ -100,8 +98,8 @@
   <div id="data-note" hidden>
     Identity across letters is matched by normalized name; homonyms may merge and spelling variants may split
     (affects the signatory network most). Signatures are long-format (a person appears once per letter signed),
-    so cross-letter overlap is the subject here. The “Delay the Cybersecurity Mandate” petition overlaps the two
-    Trellix letters by construction. Names are drawn from public letters. Built from the standardized corpus.
+    so cross-letter overlap is the subject here. The signatory network draws ties where two people co-signed
+    several letters; the “min co-signed” and “spacing” sliders control density. Names are drawn from public letters.
   </div>
 </footer>
 
