@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>UC Faculty Statements — Affiliation Network</title>
+<link rel="stylesheet" href="css/styles.css"/>
+</head>
+<body>
+<header>
+  <div class="hgroup">
+    <h1>UC Faculty Collective Statements — Affiliation Network</h1>
+    <p id="subtitle">Documents tied by shared signatories · signatories tied by shared documents</p>
+  </div>
+  <nav class="tabs">
+    <button class="tab active" data-view="letters">Letter network</button>
+    <button class="tab" data-view="matrix">Matrix</button>
+    <button class="tab" data-view="bipartite">Bipartite explorer</button>
+    <button class="tab" data-view="people">Signatory network</button>
+  </nav>
+</header>
+
+<div class="layout">
+  <main>
+    <!-- LETTERS -->
+    <section id="view-letters" class="view active">
+      <div class="toolbar">
+        <label>Edge weight
+          <select id="lt-metric"><option value="shared">shared signers</option>
+            <option value="jaccard">Jaccard</option><option value="overlap">overlap coef.</option></select></label>
+        <label>Min shared <span id="lt-minval">1</span>
+          <input type="range" id="lt-min" min="1" max="50" value="1"/></label>
+        <label>Layout
+          <select id="lt-layout"><option value="fcose">force</option>
+            <option value="concentric">by year (rings)</option><option value="circle">circle by date</option></select></label>
+        <label>Color
+          <select id="lt-color"><option value="theme">theme</option><option value="year">era</option>
+            <option value="campus_scope">scope</option></select></label>
+        <input type="search" id="lt-search" placeholder="search letters…"/>
+      </div>
+      <div class="stage"><div id="cy-letters"></div><div id="legend-letters" class="legend"></div></div>
+    </section>
+
+    <!-- MATRIX -->
+    <section id="view-matrix" class="view">
+      <div class="toolbar">
+        <label>Order
+          <select id="mx-order"><option value="cluster">cluster (seriation)</option>
+            <option value="date">date</option><option value="topic">topic</option><option value="alpha">title</option></select></label>
+        <label>Cell
+          <select id="mx-metric"><option value="shared">shared signers</option><option value="jaccard">Jaccard</option></select></label>
+        <span class="hint">Hover a cell for the overlap · click a cell to open it in the bipartite explorer</span>
+      </div>
+      <div class="stage"><div id="matrix-wrap"><svg id="matrix"></svg></div></div>
+    </section>
+
+    <!-- BIPARTITE -->
+    <section id="view-bipartite" class="view">
+      <div class="toolbar">
+        <label>Focus letter
+          <select id="bp-letter"><option value="">— pick a letter —</option></select></label>
+        <label>Max signers shown <span id="bp-capval">60</span>
+          <input type="range" id="bp-cap" min="20" max="200" step="10" value="60"/></label>
+        <button id="bp-clear" class="btn">Clear</button>
+        <span class="hint">Click a person to add their other letters; click a letter to add its signers.</span>
+      </div>
+      <div class="stage"><div id="cy-bip"></div></div>
+    </section>
+
+    <!-- PEOPLE -->
+    <section id="view-people" class="view">
+      <div class="toolbar">
+        <label>Min letters / person <span id="pp-nodeval">6</span>
+          <input type="range" id="pp-node" min="5" max="9" value="6"/></label>
+        <label>Min co-signed (edge) <span id="pp-edgeval">5</span>
+          <input type="range" id="pp-edge" min="4" max="9" value="5"/></label>
+        <input type="search" id="pp-search" placeholder="search people…"/>
+        <span class="hint">Network = repeat signers; table lists all who signed ≥2.</span>
+      </div>
+      <div class="stage two">
+        <div id="cy-people"></div>
+        <div id="connectors" class="panel-table">
+          <table><thead><tr><th>#</th><th>Name</th><th>Campus</th><th data-sort="n">Letters</th><th>Span</th></tr></thead>
+          <tbody id="connectors-body"></tbody></table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <aside id="panel">
+    <div id="panel-empty" class="muted">Select a letter or person to see details.</div>
+    <div id="panel-body" hidden></div>
+  </aside>
+</div>
+
+<div id="tooltip" class="tooltip" hidden></div>
+<footer>
+  <span id="meta-line"></span>
+  · <a id="data-note-toggle" href="#">About the data &amp; caveats</a>
+  <div id="data-note" hidden>
+    Identity across letters is matched by normalized name; homonyms may merge and spelling variants may split
+    (affects the signatory network most). Signatures are long-format (a person appears once per letter signed),
+    so cross-letter overlap is the subject here. The “Delay the Cybersecurity Mandate” petition overlaps the two
+    Trellix letters by construction. Names are drawn from public letters. Built from the standardized corpus.
+  </div>
+</footer>
+
+<script src="data/network-data.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cytoscape@3.30.2/dist/cytoscape.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/layout-base@2.0.1/layout-base.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cose-base@2.2.0/cose-base.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cytoscape-fcose@2.2.0/cytoscape-fcose.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
