@@ -207,9 +207,9 @@ function renderPeople(){ if(!cy3)initPeople();
   cy3.add(edges.map(e=>({data:{id:"pe_"+e[0]+"_"+e[1],source:e[0],target:e[1],w:e[2]}})));
   layoutPeople(); peopleLegend(nodes,edges.length,capped);
 }
-function peopleLayoutOpts(randomize){ return {name:LNAME,animate:false,
-  nodeRepulsion:2000+ppSpace*3200, idealEdgeLength:30+ppSpace*22, nodeSeparation:40+ppSpace*18,
-  gravity:0.2, gravityRange:3.8, packComponents:true, randomize:randomize}; }
+function peopleLayoutOpts(randomize){ var x=ppSpace; return {name:LNAME,animate:false,
+  nodeRepulsion:1000*x*x, idealEdgeLength:14*x*x, nodeSeparation:10*x*x,
+  gravity:0.04, gravityRange:6, packComponents:false, numIter:2500, randomize:randomize}; }
 function layoutPeople(){ cy3.layout(peopleLayoutOpts(true)).run(); cy3.fit(undefined,40); }
 function relayoutRepulsion(){ if(cy3&&cy3.nodes().length) cy3.layout(peopleLayoutOpts(false)).run(); }
 function edgePanel(a,b){
