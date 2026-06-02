@@ -154,7 +154,7 @@ function drawMatrix(){
 function trunc(s,n){ return s.length>n?s.slice(0,n-1)+"…":s; }
 
 /* ===================== BIPARTITE ===================== */
-let cy2=null, bpCap=60;
+let cy2=null, bpCap=80;
 function initBip(){ cy2=cytoscape({container:document.getElementById("cy-bip"),elements:[],
   style:baseStyle(),layout:{name:LNAME,animate:false},wheelSensitivity:0.2});
   cy2.on("tap","node.L",e=>{expandLetter(e.target.id());letterPanel(e.target.id());});
@@ -168,11 +168,13 @@ function bipAddLetter(id){ if(cy2.$id(id).length)return; const l=letterById[id];
 function bipAddPerson(pid,name,campus){ if(cy2.$id(pid).length)return; const multi=(INC.byPerson[pid]||[]).length>=2;
   cy2.add({group:"nodes",classes:"Pp"+(multi?" multi":""),data:{id:pid,label:name||(personById[pid]&&personById[pid].name)||pid,color:CAMPUS_COLORS[campus]||"#718096"}}); }
 function bipLink(l,p){ const id="b_"+l+"__"+p; if(cy2.$id(id).length)return; cy2.add({group:"edges",data:{id,source:l,target:p}}); }
+function byConn(sg){ return sg.slice().sort((a,b)=>((INC.byPerson[b.id]||[]).length-(INC.byPerson[a.id]||[]).length)); }
 function focusLetter(id){ if(!cy2)initBip(); cy2.elements().remove(); bipAddLetter(id);
-  const sg=(INC.byLetter[id]||[]); sg.slice(0,bpCap).forEach(s=>{bipAddPerson(s.id,s.name,s.campus);bipLink(id,s.id);});
+  const sg=byConn(INC.byLetter[id]||[]); sg.slice(0,bpCap).forEach(s=>{bipAddPerson(s.id,s.name,s.campus);bipLink(id,s.id);});
   bipRun(); document.getElementById("bp-letter").value=id;
-  setPanel(`<h2>${esc(letterById[id].title)}</h2><div class="sub">showing ${Math.min(bpCap,sg.length)} of ${sg.length} signers</div><p class="muted">Click a person to add the other letters they signed.</p>`); }
-function expandLetter(id){ const sg=(INC.byLetter[id]||[]); sg.slice(0,bpCap).forEach(s=>{bipAddPerson(s.id,s.name,s.campus);bipLink(id,s.id);}); bipRun(); }
+  const multi=sg.filter(s=>(INC.byPerson[s.id]||[]).length>1).length;
+  setPanel(`<h2>${esc(letterById[id].title)}</h2><div class="sub">showing ${Math.min(bpCap,sg.length)} of ${sg.length} signers — most-connected first</div><p class="muted">${multi} of these signers also signed other letters (shown first, with a dark ring); click one to add those letters. Raise “Max signers shown” to include more.</p>`); }
+function expandLetter(id){ const sg=byConn(INC.byLetter[id]||[]); sg.slice(0,bpCap).forEach(s=>{bipAddPerson(s.id,s.name,s.campus);bipLink(id,s.id);}); bipRun(); }
 function expandPerson(pid){ const ls=(INC.byPerson[pid]||[]); ls.forEach(sid=>{ if(letterById[sid]){bipAddLetter(sid);bipLink(sid,pid);} }); bipRun(); }
 function focusIntersection(a,b){ if(!cy2)initBip(); cy2.elements().remove(); bipAddLetter(a); bipAddLetter(b);
   const sb=new Set((INC.byLetter[b]||[]).map(s=>s.id)); const both=(INC.byLetter[a]||[]).filter(s=>sb.has(s.id));
