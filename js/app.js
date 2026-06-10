@@ -118,7 +118,11 @@ function hideTip(){ tipEl.hidden=true; }
 
 /* ---------------- side panel ---------------- */
 const pEmpty=document.getElementById("panel-empty"), pBody=document.getElementById("panel-body");
+const panelEl=document.getElementById("panel");
+const narrowQ=(window.matchMedia?window.matchMedia("(max-width:1100px)"):{matches:false});
+document.getElementById("panel-close").onclick=()=>panelEl.classList.remove("open");
 function setPanel(html){ pEmpty.hidden=true; pBody.hidden=false; pBody.innerHTML=html;
+  if(narrowQ.matches)panelEl.classList.add("open");
   pBody.querySelectorAll("[data-letter]").forEach(el=>el.onclick=()=>selectLetter(el.dataset.letter,true));
   pBody.querySelectorAll("[data-person]").forEach(el=>el.onclick=()=>selectPerson(el.dataset.person,true));
   const b=pBody.querySelector("[data-bip]"); if(b)b.onclick=()=>{switchView("bipartite"); focusLetter(b.dataset.bip);};
@@ -226,9 +230,11 @@ function timelineHighlight(id){
 }
 function drawTimeline(){
   const wrap=document.getElementById("timeline-wrap");
-  const W=Math.max(1180,wrap.clientWidth-8);
-  const padL=170,padR=40,padT=46,padB=64,laneH=64;
+  const W=Math.max(900,wrap.clientWidth-8);
+  const padL=170,padR=40,padT=46,padB=60;
   const lanes=LANE_ORDER.filter(k=>L.some(l=>themeKey(l)===k));
+  const availH=wrap.clientHeight||0;
+  const laneH=availH>200?Math.max(46,Math.min(72,Math.floor((availH-padT-padB-8)/lanes.length))):64;
   const H=padT+lanes.length*laneH+padB;
   const t0=new Date(2008,9,1), t1=new Date(2026,11,1);
   const span=t1-t0;
@@ -254,14 +260,15 @@ function drawTimeline(){
   const sorted=L.slice().sort((a,b)=>dateOf(a)-dateOf(b));
   sorted.forEach(l=>{
     const li=lanes.indexOf(themeKey(l));
-    const cx=x(dateOf(l)); const r=Math.max(5,Math.sqrt(l.n_signatories)*0.62);
+    const cx=x(dateOf(l)); const r=Math.min(Math.max(5,Math.sqrt(l.n_signatories)*0.62),laneH*0.46+4);
     let cy=padT+li*laneH+laneH/2, k=0;
     for(const p of placed[li]){ if(Math.abs(p.x-cx)<(p.r+r+3)){ k++; } }
     if(k)cy+= (k%2? -1:1)*Math.min(laneH/2-r-1, (Math.ceil(k/2))*(r*0.85+4));
     placed[li].push({x:cx,r});
     const col=themeOf(l).color;
     s+=`<g class="tl-node" data-id="${l.id}"><circle cx="${cx}" cy="${cy}" r="${r}" fill="${col}" fill-opacity="0.88" stroke="${bg1}" stroke-width="1.5"/>`;
-    if(l.n_signatories>=600)s+=`<text class="tl-label" x="${cx}" y="${cy-r-5}" text-anchor="middle">${esc(shortTitle(l).replace(/^\d{4} · /,""))}</text>`;
+    if(l.n_signatories>=600){ const anch=cx>W-180?"end":(cx<padL+180?"start":"middle");
+      s+=`<text class="tl-label" x="${cx}" y="${cy-r-5}" text-anchor="${anch}">${esc(shortTitle(l).replace(/^\d{4} · /,""))}</text>`; }
     s+=`</g>`;
   });
   s+=`</svg>`;
@@ -577,7 +584,7 @@ sIn.addEventListener("keydown",e=>{
 });
 document.addEventListener("keydown",e=>{
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){ e.preventDefault(); openSearch(); }
-  else if(e.key==="Escape"){ if(searchOv.classList.contains("open"))closeSearch(); else if(reader.classList.contains("open"))closeReader(); }
+  else if(e.key==="Escape"){ if(searchOv.classList.contains("open"))closeSearch(); else if(reader.classList.contains("open"))closeReader(); else panelEl.classList.remove("open"); }
 });
 
 /* ================================ tabs / boot ================================ */
