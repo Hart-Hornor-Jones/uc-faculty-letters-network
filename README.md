@@ -1,66 +1,60 @@
-# UC Faculty Collective Statements — Affiliation Network
+# The UC Open-Letter Network
 
 An interactive, static visualization of the standardized corpus of UC-faculty open letters,
-petitions, and collective statements as a **two-mode (affiliation) network**: documents tied by
-shared signatories, and signatories tied by shared documents.
+petitions, and collective statements (2009–2026) as a **two-mode (affiliation) network**:
+documents tied by shared signatories, and signatories tied by shared documents.
 
-Built from the companion corpus (`_standardized_corpus/`). Current data: **27 letters, ~10,656
-signature records, 7,044 unique signers** (1,968 signed ≥2 letters).
+Live site: https://hart-hornor-jones.github.io/uc-faculty-letters-network/
+
+Current data: **35 letters · ~10,900 signature records · 9,335 unique signers** (2,517 signed ≥2).
+Every letter carries a researched context dossier (background, outcome, sources — verified
+June 2026 against contemporary reporting), and 34 of 35 embed the full statement text.
 
 ## Views
-- **Letter network** — the 27 letters; node size = #signatories, colour = theme/era/scope; edges =
-  shared signers (toggle raw count / Jaccard / overlap; prune with the "min shared" slider). Click a
-  letter for metadata + its most-overlapping letters; "Open in bipartite explorer" to see its signers.
-- **Matrix** — a 27×27 heatmap of shared signers (or Jaccard), reorderable by cluster/date/topic/title.
-  Click a cell to open that intersection in the bipartite explorer.
-- **Bipartite explorer** — pick a letter to see its signers; click a person to add the other letters
-  they signed; click a letter to add its signers. (Large rosters are capped — see the slider.)
-- **Signatory network** — the repeat signers (default: signed ≥6 letters), tied where they co-signed
-  ≥5 letters; plus a sortable "top connectors" table covering everyone who signed ≥2.
+- **Timeline** *(opens first)* — every letter on a 2009–2026 axis, sized by signatures, in theme
+  lanes (budget, protest & policing, governance, labor, curriculum & admissions, Jewish community,
+  cybersecurity, federal pressure), with key contextual events marked. Click = details; double-click = read.
+- **Letter network** — letters tied by shared signers (count / Jaccard / overlap; prune slider;
+  force, year-ring, or date-circle layouts; colour by theme, era, or scope).
+- **Signatory network** — repeat signers tied by co-signed letters, plus a sortable top-connectors table.
+- **Matrix** — 35×35 shared-signer heatmap, reorderable (seriation / date / theme / title).
+- **Explorer** — bipartite ego-expansion: a letter's signers; a signer's letters; intersections.
+- **Catalogue** — card list of all letters with theme, scope, dates (with confidence badges), text status.
+- **Reader** — full statement text + dossier for any letter (also deep-linkable: `#/letter/<id>`).
+- **Global search** (Ctrl/Cmd-K) — all 35 letters and all 9,335 signers.
+- Light/dark theme toggle (persisted).
 
-## View it
-The data is embedded as a JavaScript global (`data/network-data.js`), so **no web server is required** —
-you can simply open `index.html` in a browser locally, *and* it works on GitHub Pages.
+## Architecture
+Static, no build step, no server required: plain HTML/CSS/JS + Cytoscape.js (CDN).
+Open `index.html` from disk or host on GitHub Pages as-is.
 
-### Deploy to GitHub Pages
-1. Put this folder in a repo (root, or a `/docs` folder).
-2. Settings → Pages → Source: your branch, folder root (or `/docs`).
-3. Visit the published URL; `index.html` is the entry point.
+```
+index.html                  entry point
+css/styles.css              design system (dark default + [data-theme=light])
+js/app.js                   all views + reader + search (vanilla JS)
+data/network-data.js        window.NET bundle (letters, edges, persons, incidence, orders)
+data/letter-texts.js        window.NET_TEXTS (full statement bodies)
+data/letter_context.json    researched dossiers (background/outcome/links/date provenance)
+data/*.json                 the same data as separate files, for reproducibility
+build/build_network.py      regenerates data/ from the corpus
+```
 
-Dependencies (Cytoscape.js + fcose) load from a CDN at runtime; nothing to install.
-
-## Rebuild the data (after the corpus changes)
+## Rebuild after the corpus changes
 ```
 python3 build/build_network.py
 ```
-It reads `../_standardized_corpus/00_INDEX/all_signatories.csv` and `statements_index.csv` and
-regenerates everything in `data/` (including `network-data.js`). Re-run whenever you add or update
-letters; the visualization updates automatically.
+Reads `../_standardized_corpus/00_INDEX/{all_signatories,statements_index,letter_overrides}.csv`,
+statement bodies from `../_standardized_corpus/statements/*/statement.md`, and merges
+`data/letter_context.json`. Date corrections & recovered metadata live in `letter_overrides.csv`
+(both are inputs — safe to re-run any time).
 
-### Files
-```
-index.html                 entry point
-css/styles.css             styling
-js/app.js                  all four views + interactions (Cytoscape.js, vanilla JS)
-data/network-data.js       window.NET bundle consumed by the app
-data/*.json                same data as separate files (reproducibility)
-build/build_network.py     regenerates data/ from the corpus CSVs
-```
+## Deploy (GitHub Pages)
+Push the contents of this folder to the `uc-faculty-letters-network` repo (root).
+Settings → Pages → deploy from branch `main`, folder `/ (root)`. No other configuration:
+all asset paths are relative.
 
-## Tuning (defaults chosen for readability)
-- The signatory co-sign graph is intrinsically dense (repeat signers nearly all co-signed the big 2024
-  letters), so the signatory network defaults to **≥6 letters / edge ≥5 co-signed** and exposes both
-  sliders. `build_network.py` emits person nodes for ≥5 letters and edges for ≥4 co-signed; raise
-  `NETWORK_MIN` / `EDGE_KEEP` in the script to change what's emitted.
-
-## Caveats
-- **Identity matching is approximate** (normalized name): homonyms may merge, spelling variants may
-  split — this most affects the signatory network. An optional `person_overrides.csv` reconciliation
-  layer is described in `DESIGN.md`.
-- Signatures are **long-format** (a person appears once per letter signed); cross-letter overlap is the
-  point of the graphic. The "Delay the Cybersecurity Mandate" petition overlaps the two Trellix letters
-  by construction.
-- Roster completeness varies by source (clean exports vs. PDF parses); see each letter's `text_status`.
-- Names are drawn from public letters.
-
-See `DESIGN.md` for the full design rationale and planned extensions.
+## Caveats (also in the site's "About the data")
+Identity across letters is matched by normalized name (homonyms may merge, variants may split —
+affects the signatory network most). Rosters reflect captured snapshots of sign-on letters that may
+have kept growing. Dates follow the document or its sign-on log; `approx` badges mark dates inferred
+from coverage. Names are drawn from public letters.

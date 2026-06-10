@@ -41,6 +41,32 @@ def apply_overrides(letters):
 print("[build_network] overrides applied:",apply_overrides(letters))
 lid=[l["id"] for l in letters]
 
+# ---- context dossiers (researched 2026-06-10) ----
+CTX_FP=os.path.join(OUT,"letter_context.json")
+CTX=json.load(open(CTX_FP,encoding="utf-8")) if os.path.exists(CTX_FP) else {}
+for l in letters:
+    c=CTX.get(l["id"],{})
+    l["date_display"]=c.get("date_display","") or (l.get("date_raw") or l.get("date_iso") or "undated")
+    l["date_confidence"]=c.get("date_confidence","")
+    l["context"]=c.get("context",""); l["outcome"]=c.get("outcome","")
+    l["links"]=c.get("links",[])
+    if c.get("date_evidence_url"): l["date_evidence_url"]=c["date_evidence_url"]
+
+# ---- statement texts from the corpus ----
+STM=os.path.normpath(os.path.join(HERE,"..","..","_standardized_corpus","statements"))
+TEXTS={}
+for l in letters:
+    fp=os.path.join(STM,l["id"],"statement.md")
+    if not os.path.exists(fp): l["has_text"]=False; continue
+    md=open(fp,encoding="utf-8").read()
+    m=re.search(r"## Statement\s*\n(.*?)(?=\n## Signatories)",md,re.S)
+    body=(m.group(1) if m else "").strip()
+    if body.startswith("_Statement body not stored locally"):
+        l["has_text"]=False; continue
+    TEXTS[l["id"]]=body
+    l["has_text"]=bool(body)
+
+
 # ---- incidence ----
 signers=defaultdict(list)          # sid -> list of (name_norm, display, campus) in order
 letters_of=defaultdict(set)        # name_norm -> set(sid)
@@ -104,6 +130,12 @@ incidence=dict(
   byLetter={sid:[dict(id=nn,name=dn,campus=cc) for nn,dn,cc in lst] for sid,lst in signers.items()},
   byPerson={nn:sorted(s,key=lambda x:order_by_date.get(x,"9999")) for nn,s in letters_of.items()})
 
+# ---- campus mix per letter ----
+for l in letters:
+    cnt=Counter(cc for _,_,cc in signers.get(l["id"],[]) if cc)
+    l["campus_mix"]=dict(cnt.most_common())
+    l["n_distinct"]=len(sset.get(l["id"],set()))
+
 # ---- matrix orders ----
 shared_lookup=defaultdict(dict)
 for e in ledges:
@@ -133,6 +165,9 @@ for name,obj in [("letters.json",letters),("letter_edges.json",ledges),
                  ("persons.json",persons),("person_edges.json",pedges),
                  ("incidence.json",incidence),("orders.json",orders),("meta.json",meta)]:
     json.dump(obj, open(os.path.join(OUT,name),"w",encoding="utf-8"), ensure_ascii=False)
+json.dump(TEXTS, open(os.path.join(OUT,"letter_texts.json"),"w",encoding="utf-8"), ensure_ascii=False)
+with open(os.path.join(OUT,"letter-texts.js"),"w",encoding="utf-8") as f:
+    f.write("window.NET_TEXTS = "); json.dump(TEXTS,f,ensure_ascii=False); f.write(";\n")
 with open(os.path.join(OUT,"network-data.js"),"w",encoding="utf-8") as f:
     f.write("window.NET = "); json.dump(bundle,f,ensure_ascii=False); f.write(";\n")
 
@@ -144,4 +179,5 @@ print("NETWORK_MIN chosen:",NETWORK_MIN,"-> person nodes:",len(node_ids),"| pers
 import os as _o
 for fn in ("network-data.js","incidence.json","persons.json","letter_edges.json","person_edges.json"):
     print(f"  {fn}: {_o.path.getsize(os.path.join(OUT,fn))//1024} KB")
+print("texts embedded:",len(TEXTS),"| with context:",sum(1 for l in letters if l.get("context")))
 print("top connectors:", [(p['name'],p['n_letters']) for p in persons[:8]])
