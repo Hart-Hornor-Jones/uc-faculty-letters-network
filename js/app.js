@@ -54,6 +54,7 @@ const THEME_BY_ID={
   "uc-a-g-ethnic-studies-support":"curriculum",
   "2022-05-31_uc-faculty-letter-boars-ethnic-studies-h":"curriculum",
   "2026-05-25_uc-stem-faculty-sat-act-letter":"curriculum",
+  "2026-06-11_uc-ssh-faculty-sat-act-letter":"curriculum",
   "2024-05_ucla-jewish-faculty-staff-open-letter":"jewish",
   "2024-05-08_uc-faculty-for-integrity-letter-regents":"jewish",
   "2025_jewish-uc-faculty-letter-to-regents":"jewish",
@@ -254,21 +255,48 @@ function drawTimeline(){
       const yb=H-padB+26;
       s+=`<g class="tl-ev" data-ev="${i}"><line x1="${xd}" y1="${padT-12}" x2="${xd}" y2="${yb-7}"/>`+
          `<path d="M ${xd} ${yb-6} l 4.2 4.2 -4.2 4.2 -4.2 -4.2 Z"/></g>`; }); }
-  // letters
-  const placed=[]; // per lane: array of {x,r}
-  lanes.forEach(()=>placed.push([]));
-  const sorted=L.slice().sort((a,b)=>dateOf(a)-dateOf(b));
+  // letters — 2D de-collision so every dot stays separated and clickable.
+  // Dots prefer their true date (x) and lane centre; when a date-cluster would
+  // overlap they fan out, picking the most compact free slot (vertical first to
+  // keep dates honest, horizontal nudge only when the lane band is full).
+  const placed=[];            // every dot: {x,y,r}
+  const labelBoxes=[];        // placed label rects: {x0,x1,y0,y1}
+  const GAP=2.4;
+  function overlaps(X,Y,r){ for(const p of placed){ const dx=p.x-X,dy=p.y-Y,rr=p.r+r+GAP; if(dx*dx+dy*dy<rr*rr) return true; } return false; }
+  function findSpot(cx,laneCy,r){
+    if(!overlaps(cx,laneCy,r)) return {x:cx,y:laneCy};
+    const vstep=Math.max(3.5,r*0.5), hstep=Math.max(5,r*0.8);
+    const vMax=laneH*0.56;        // fan within ~the lane; nudge sideways once it's full
+    const cand=[];
+    for(let i=0;i<=22;i++) for(let j=0;j<=30;j++){
+      const dy=i*vstep; if(dy>vMax) continue;
+      for(const sy of (i?[-1,1]:[0])) for(const sx of (j?[-1,1]:[0]))
+        cand.push({dx:sx*j*hstep, dy:sy*dy, cost:Math.hypot(sx*j*hstep*1.5, sy*dy)});
+    }
+    cand.sort((a,b)=>a.cost-b.cost);
+    for(const c of cand){ if(!overlaps(cx+c.dx,laneCy+c.dy,r)) return {x:cx+c.dx,y:laneCy+c.dy}; }
+    return {x:cx,y:laneCy};
+  }
+  function placeLabel(text,cx,cy,r,anch){
+    const w=text.length*5.4, h=11;
+    const x0=anch==="start"?cx:anch==="end"?cx-w:cx-w/2, x1=x0+w;
+    for(const ly of [cy-r-5, cy+r+12]){ const y0=ly-h, y1=ly+2;
+      if(!labelBoxes.some(B=>x0<B.x1&&x1>B.x0&&y0<B.y1&&y1>B.y0)){ labelBoxes.push({x0,x1,y0,y1}); return ly; } }
+    return null;
+  }
+  // place larger letters first so the most prominent dots land nearest their true date
+  const sorted=L.slice().sort((a,b)=> (b.n_signatories-a.n_signatories) || (dateOf(a)-dateOf(b)) );
   sorted.forEach(l=>{
     const li=lanes.indexOf(themeKey(l));
-    const cx=x(dateOf(l)); const r=Math.min(Math.max(5,Math.sqrt(l.n_signatories)*0.62),laneH*0.46+4);
-    let cy=padT+li*laneH+laneH/2, k=0;
-    for(const p of placed[li]){ if(Math.abs(p.x-cx)<(p.r+r+3)){ k++; } }
-    if(k)cy+= (k%2? -1:1)*Math.min(laneH/2-r-1, (Math.ceil(k/2))*(r*0.85+4));
-    placed[li].push({x:cx,r});
+    const cx=x(dateOf(l));
+    const r=Math.max(4.5, Math.min(Math.sqrt(l.n_signatories)*0.52, laneH*0.36));
+    const pos=findSpot(cx, padT+li*laneH+laneH/2, r);
+    placed.push({x:pos.x,y:pos.y,r});
     const col=themeOf(l).color;
-    s+=`<g class="tl-node" data-id="${l.id}"><circle cx="${cx}" cy="${cy}" r="${r}" fill="${col}" fill-opacity="0.88" stroke="${bg1}" stroke-width="1.5"/>`;
-    if(l.n_signatories>=600){ const anch=cx>W-180?"end":(cx<padL+180?"start":"middle");
-      s+=`<text class="tl-label" x="${cx}" y="${cy-r-5}" text-anchor="${anch}">${esc(shortTitle(l).replace(/^\d{4} · /,""))}</text>`; }
+    s+=`<g class="tl-node" data-id="${l.id}"><circle cx="${pos.x}" cy="${pos.y}" r="${r}" fill="${col}" fill-opacity="0.88" stroke="${bg1}" stroke-width="1.5"/>`;
+    if(l.n_signatories>=600){ const txt=shortTitle(l).replace(/^\d{4} · /,""); const anch=pos.x>W-180?"end":(pos.x<padL+180?"start":"middle");
+      const ly=placeLabel(txt,pos.x,pos.y,r,anch);
+      if(ly!=null) s+=`<text class="tl-label" x="${pos.x}" y="${ly}" text-anchor="${anch}">${esc(txt)}</text>`; }
     s+=`</g>`;
   });
   s+=`</svg>`;

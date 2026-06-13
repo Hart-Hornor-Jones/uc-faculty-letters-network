@@ -621,7 +621,7 @@
   "date_display": "May 25, 2026",
   "date_confidence": "exact",
   "date_evidence_url": "https://ucstudentsuccess.org/",
-  "context": "Led by UC Berkeley mathematician Zvezdelina Stankova, more than 1,470 UC STEM faculty asked the university to reinstate SAT/ACT math scores for STEM applicants beginning fall 2027 and to give STEM faculty formal oversight of readiness standards in their majors. The letter cites steep declines in calculus readiness since UC went test-free in 2020 — including a roughly thirty-fold rise in entering UCSD students testing below high-school math level — and was signed by 360+ mathematics faculty, seven of nine math department chairs, and 43+ STEM chairs systemwide. It is the largest faculty letter on admissions policy in UC history and the seed document of this corpus.",
+  "context": "Led by UC Berkeley mathematician Zvezdelina Stankova, more than 1,290 UC STEM faculty asked the university to reinstate SAT/ACT math scores for STEM applicants beginning fall 2027 and to give STEM faculty formal oversight of readiness standards in their majors. The letter cites steep declines in calculus readiness since UC went test-free in 2020 — including a roughly thirty-fold rise in entering UCSD students testing below high-school math level — and was signed by 360+ mathematics faculty, seven of nine math department chairs, and 43+ STEM chairs systemwide. It is the largest faculty letter on admissions policy in UC history and the seed document of this corpus.",
   "outcome": "As of early June 2026 no policy change had been announced: BOARS met June 5, 2026, signaled tentative interest in test requirements (Smarter Balanced for Californians, SAT/ACT for nonresidents), and owed a policy roadmap by June 30; any change requires Regents approval.",
   "links": [
    {
@@ -745,22 +745,5 @@
    "date": "2026-06-05",
    "label": "BOARS takes up STEM testing letter"
   }
- ],
- "2026-06-11_uc-ssh-faculty-sat-act-letter": {
-  "date_display": "June 11, 2026",
-  "date_confidence": "exact",
-  "date_evidence_url": "https://ucstudentsuccess.org/socscihum/",
-  "context": "Released June 11, 2026 as the social-sciences-and-humanities counterpart to the May 25 STEM faculty letter, this letter gathered nearly 190 UC faculty from the social sciences, humanities, arts, business, law, and education (120+ at launch). It endorses the STEM colleagues' call to restore SAT/ACT math and goes further, arguing that the verbal-reasoning (reading and writing) component also predicts college grades and graduation — citing Table 6 of the Academic Senate's Standardized Testing Task Force report — and that, in an era of K-12 grade inflation and AI-written admissions essays, requiring every UC program to remain test-blind is unreasonable. It addresses equity directly, noting that no admissions criterion is uncorrelated with social background and that testing can surface talented students from disadvantaged schools, and frames the decision as one of faculty shared governance, recalling the Senate Assembly's unanimous 51-0 vote to keep testing that the Regents overrode in 2020.",
-  "outcome": "Released just as the Academic Senate announced a review of admissions-testing policy and days after BOARS took up the STEM letter on June 5, 2026 and signaled tentative interest in test requirements, with a policy roadmap owed by June 30. As of mid-June 2026 no policy change had been adopted; any change requires Regents approval.",
-  "links": [
-   {
-    "label": "ucstudentsuccess.org/socscihum — the letter and roster",
-    "url": "https://ucstudentsuccess.org/socscihum/"
-   },
-   {
-    "label": "The Daily Californian — UC humanities faculty endorse standardized tests as Academic Senate announces review",
-    "url": "https://www.dailycal.org/news/uc/joining-stem-faculty-uc-humanities-faculty-endorse-use-of-standardized-tests-in-admissions-as-academic/article_a90605be-44b9-4d92-9ada-e165b20588bf.html"
-   }
-  ]
- }
+ ]
 }

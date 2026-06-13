@@ -6,9 +6,9 @@ documents tied by shared signatories, and signatories tied by shared documents.
 
 Live site: https://hart-hornor-jones.github.io/uc-faculty-letters-network/
 
-Current data: **35 letters · ~10,900 signature records · 9,335 unique signers** (2,517 signed ≥2).
+Current data: **36 letters · ~14,500 signature records · 9,545 unique signers** (2,623 signed ≥2).
 Every letter carries a researched context dossier (background, outcome, sources — verified
-June 2026 against contemporary reporting), and 34 of 35 embed the full statement text.
+June 2026 against contemporary reporting), and 35 of 36 embed the full statement text.
 
 ## Views
 - **Timeline** *(opens first)* — every letter on a 2009–2026 axis, sized by signatures, in theme
@@ -17,11 +17,11 @@ June 2026 against contemporary reporting), and 34 of 35 embed the full statement
 - **Letter network** — letters tied by shared signers (count / Jaccard / overlap; prune slider;
   force, year-ring, or date-circle layouts; colour by theme, era, or scope).
 - **Signatory network** — repeat signers tied by co-signed letters, plus a sortable top-connectors table.
-- **Matrix** — 35×35 shared-signer heatmap, reorderable (seriation / date / theme / title).
+- **Matrix** — 36×36 shared-signer heatmap, reorderable (seriation / date / theme / title).
 - **Explorer** — bipartite ego-expansion: a letter's signers; a signer's letters; intersections.
 - **Catalogue** — card list of all letters with theme, scope, dates (with confidence badges), text status.
 - **Reader** — full statement text + dossier for any letter (also deep-linkable: `#/letter/<id>`).
-- **Global search** (Ctrl/Cmd-K) — all 35 letters and all 9,335 signers.
+- **Global search** (Ctrl/Cmd-K) — all 36 letters and all 9,545 signers.
 - Light/dark theme toggle (persisted).
 
 ## Architecture
@@ -37,6 +37,8 @@ data/letter-texts.js        window.NET_TEXTS (full statement bodies)
 data/letter_context.json    researched dossiers (background/outcome/links/date provenance)
 data/*.json                 the same data as separate files, for reproducibility
 build/build_network.py      regenerates data/ from the corpus
+build/update_affiliation_viz.py  pull latest STEM+SSH rosters from the signatory-analyzer, then rebuild
+build/inputs/               statement bodies for roster-sourced letters (e.g. ssh_letter_body.txt)
 ```
 
 ## Rebuild after the corpus changes
@@ -47,6 +49,18 @@ Reads `../_standardized_corpus/00_INDEX/{all_signatories,statements_index,letter
 statement bodies from `../_standardized_corpus/statements/*/statement.md`, and merges
 `data/letter_context.json`. Date corrections & recovered metadata live in `letter_overrides.csv`
 (both are inputs — safe to re-run any time).
+
+## Refresh the two ucstudentsuccess.org letters (STEM + Social-Sci/Humanities)
+These two letters keep gaining signatures and are scraped by the **signatory-analyzer**
+(`signatory_viz/signatures/*.csv`, refreshed by its `update.ps1`). To pull the latest rosters in:
+```
+python build/update_affiliation_viz.py
+```
+It re-reads both rosters, applies `cross_letter_merges.csv` so dual signers collapse to one
+node, rewrites only those two letters' rows in the corpus, refreshes the SSH statement folder,
+then runs `build_network.py`. Idempotent and path-robust (`--signatures-dir` to override the
+source). A brand-new letter still needs a one-time dossier in `data/letter_context.json` and a
+theme in `THEME_BY_ID` (js/app.js).
 
 ## Deploy (GitHub Pages)
 Push the contents of this folder to the `uc-faculty-letters-network` repo (root).
